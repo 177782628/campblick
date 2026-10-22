@@ -44,13 +44,16 @@ function renderMeasurementVisual(card, type, value, solarMaximum = 330) {
     const fullScreen = height >= screenHeight - 2;
     const fallback = iOS && portrait && fullScreen && reported < 1 ? 59 : 0;
     document.documentElement.style.setProperty("--notch-fallback", fallback + "px");
+    const values = "Bildschirm " + screenHeight + " / Seite " + Math.round(height) + " / Aussparung " + Math.round(reported) +
+      " / Zusatz " + fallback + " / Scroll " + Math.round(scrollY) + " / Sicht " + Math.round(visualViewport?.offsetTop ?? -1) +
+      "," + Math.round(visualViewport?.pageTop ?? -1) + " / Kopf " + Math.round(document.querySelector("header")?.getBoundingClientRect().top ?? -1);
     const info = document.getElementById("notch-diagnosis");
-    if (info) info.textContent = "Bildschirm " + screenHeight + " px / Seite " + Math.round(height) +
-      " px / Aussparung gemeldet " + Math.round(reported) + " px / Zusatzabstand " + fallback + " px" +
-      " / Scroll " + Math.round(scrollY) + " / Sichtbereich " + Math.round(visualViewport?.offsetTop ?? -1) +
-      "," + Math.round(visualViewport?.pageTop ?? -1) + " / Kopf " + Math.round(document.querySelector("header")?.getBoundingClientRect().top ?? -1) +
-      " / Browser: " + navigator.userAgent.replace(/^Mozilla\/5\.0 /, "").slice(0, 160);
+    if (info) {
+      startValues ??= values;
+      info.textContent = "Start: " + startValues + "\nJetzt: " + values + "\n" + navigator.userAgent.replace(/^Mozilla\/5\.0 /, "").slice(0, 140);
+    }
   }
+  let startValues = null;
   const schedule = () => { if (!scheduled) { scheduled = true; requestAnimationFrame(updateNotch); } };
   for (const target of [window, window.visualViewport].filter(Boolean)) {
     target.addEventListener("resize", schedule);
