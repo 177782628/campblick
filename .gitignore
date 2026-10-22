@@ -1,0 +1,5 @@
+# Lokale Daten: Bluetooth-Mitschnitte enthalten Geraeteadressen und Seriennummern
+analyse/
+zwischenstaende/
+# Wird von build.ps1 erzeugt; die Online-Version liegt in docs/index.html
+ls-dashboard-aktuell.html

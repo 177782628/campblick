@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f6f8">
+  <title>Campblick | LS Dashboard</title>
+  <style>
+    :root { color-scheme:light; --ink:#202833; --muted:#616b78; --paper:#f5f6f8; --line:#e3e7ec; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    button,input,select { font:inherit; }
+    button { cursor:pointer; }
+    button:disabled { cursor:wait; opacity:.55; }
+    :focus-visible { outline:3px solid #ba6d2b; outline-offset:3px; }
+    [hidden] { display:none!important; }
+    header { padding:18px 16px 12px; padding-top:calc(18px + env(safe-area-inset-top, 0px)); }
+    @supports (-webkit-touch-callout:none) {
+      header { padding-top:calc(18px + max(59px, env(safe-area-inset-top, 0px))); }
+    }
+    .wrap { max-width:760px; margin:auto; }
+    .brand { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .wordmark { font-weight:750; font-size:23px; letter-spacing:-1px; }
+    .brand-identity { --camper-width:72px; position:relative; display:flex; align-items:center; flex:1; min-width:0; height:44px; padding-left:calc(var(--camper-width) + 10px); }
+    .camper { position:absolute; left:0; width:var(--camper-width); height:44px; padding:0; border:0; border-radius:8px; background:transparent; color:#aab2bc; transition:color .4s; }
+    .brand[data-camper="ready"] .camper,.brand[data-camper="connecting"] .camper { color:#202833; }
+    .brand[data-camper="connected"] .camper { color:#2f8f5b; }
+    .camper svg { display:block; width:100%; height:30px; }
+    .brand.is-driving .wordmark { visibility:hidden; }
+    .brand.is-driving .camper { animation:camper-drive 7s linear infinite; }
+    .brand.is-driving .camper-body { animation:camper-bounce .35s ease-in-out infinite alternate; }
+    @keyframes camper-drive {
+      0% { left:0; transform:scaleX(1); }
+      49.99% { left:calc(100% - var(--camper-width)); transform:scaleX(1); }
+      50% { left:calc(100% - var(--camper-width)); transform:scaleX(-1); }
+      99.99% { left:0; transform:scaleX(-1); }
+      100% { left:0; transform:scaleX(1); }
+    }
+    @keyframes camper-bounce { to { transform:translateY(-1.5px); } }
+    @media(prefers-reduced-motion:reduce) {
+      .brand.is-driving .camper,.brand.is-driving .camper-body { animation:none; }
+      .brand.is-driving .wordmark { visibility:visible; }
+    }
+    .camper-name { width:88px; min-width:0; border:1px solid #d8dee6; border-radius:9px; padding:8px; font-size:12px; font-weight:650; text-align:center; color:var(--ink); background:#fff; }
+    h1 { font-size:14px; font-weight:450; color:var(--muted); margin:3px 0 0; }
+    main { padding:0 16px max(12px,env(safe-area-inset-bottom)); }
+    .notice { background:#fff5df; padding:8px 10px; font-size:12px; border-radius:9px; margin:0 0 10px; color:#755624; overflow-wrap:anywhere; }
+    .error { color:#9b361d; font-size:12px; overflow-wrap:anywhere; }
+    .cards { display:grid; gap:10px; }
+    .card { background:#fff; border:1px solid var(--line); display:grid; grid-template-columns:minmax(0,1fr) auto; padding:9px 14px; border-radius:15px; line-height:1.3; }
+    .card.is-low { background:#ffe3e3; border-color:#d54b4b; }
+    .card.is-low .reading,.card.is-low h3 { color:#9b2020; }
+    .card.is-low .measurement-visual .level { fill:#c93636; }
+    .card.is-stale .reading { opacity:.45; }
+    .low-warning { grid-column:1 / -1; margin:7px 0 0; color:#9b2020; font-size:12px; font-weight:650; }
+    .card-top { grid-column:1; grid-row:3; margin-top:3px; font-size:11px; }
+    .status { font-size:11px; color:var(--muted); }
+    .card h3 { grid-column:1; grid-row:1; font-size:16px; margin:0; overflow-wrap:anywhere; }
+    .device { grid-column:1; grid-row:2; font-size:11px; color:var(--muted); margin:1px 0; overflow-wrap:anywhere; }
+    .reading { grid-column:2; grid-row:1 / 4; align-self:center; padding-left:12px; font-size:44px; letter-spacing:-2px; line-height:1.1; font-weight:650; display:flex; align-items:center; gap:10px; }
+    .reading-value { white-space:nowrap; }
+    .measurement-visual { width:54px; height:64px; flex-shrink:0; color:#647487; letter-spacing:normal; }
+    .measurement-visual svg { display:block; width:100%; height:100%; overflow:visible; }
+    .measurement-visual .outline { fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .measurement-visual .vessel { fill:#f0f3f6; stroke:currentColor; stroke-width:2; }
+    .measurement-visual .level { fill:#d49b45; }
+    .battery .measurement-visual .level { fill:#399179; }
+    .temperature .measurement-visual .level { fill:#d0603a; }
+    .measurement-visual.is-unknown .level { fill:#c3cad3; }
+    .measurement-visual .panel-surface { fill:#e4edf7; stroke:currentColor; stroke-width:2; stroke-linejoin:round; }
+    .measurement-visual .sun { color:#d99c26; }
+    .measurement-visual .sun circle { fill:currentColor; }
+    .measurement-visual .sun path { fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
+    .measurement-visual.is-unknown .sun { color:#b5bdc7; }
+    .measurement-visual .unknown { fill:var(--muted); font:600 16px system-ui,sans-serif; text-anchor:middle; }
+    @media(max-width:350px) { .measurement-visual { width:40px; height:54px; } .reading { font-size:36px; gap:6px; padding-left:6px; } }
+    dl { grid-column:1 / -1; margin:9px 0 0; }
+    dl div { display:flex; justify-content:space-between; gap:12px; border-top:1px solid var(--line); padding-top:7px; font-size:12px; }
+    dt { color:var(--muted); } dd { margin:0; font-weight:600; }
+    .card-footer { grid-column:1 / -1; display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:4px; }
+    .updated { margin:0; color:var(--muted); font-size:10px; overflow-wrap:anywhere; }
+    .bluetooth-button { display:flex; align-items:center; justify-content:center; flex-shrink:0; gap:4px; min-height:44px; padding:4px 8px; border:0; border-radius:9px; background:#edf3fa; color:#285a92; font-size:11px; }
+    .bluetooth-button svg { width:15px; height:20px; fill:none; stroke:currentColor; stroke-width:1.7; }
+    .remove-display { flex-shrink:0; min-width:44px; min-height:44px; border:0; border-radius:9px; background:transparent; color:#8b4030; font-size:20px; }
+    .add-display { display:block; width:100%; min-height:44px; margin-top:10px; border:1px dashed #aebbc9; border-radius:12px; background:transparent; color:#285a92; font-size:14px; }
+    .add-display span { font-size:22px; vertical-align:middle; margin-right:6px; }
+    dialog { width:min(440px,calc(100% - 32px)); max-height:85dvh; overflow:auto; padding:22px; border:1px solid var(--line); border-radius:18px; color:var(--ink); background:#fff; }
+    dialog::backdrop { background:#20283366; }
+    dialog h2 { margin:0 0 10px; font-size:20px; }
+    dialog p { font-size:13px; overflow-wrap:anywhere; }
+    .action { min-height:44px; padding:8px 12px; border:0; border-radius:9px; background:#edf3fa; color:#285a92; font-size:13px; }
+    .actions { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
+    .display-form { display:grid; gap:12px; }
+    label { display:grid; gap:4px; font-size:13px; }
+    input,select { width:100%; padding:10px; border:1px solid #d8dee6; border-radius:8px; background:#fff; color:var(--ink); }
+    details { margin:12px 0; border-top:1px solid var(--line); padding-top:10px; }
+    summary { cursor:pointer; font-size:13px; font-weight:650; }
+    code { font-size:11px; overflow-wrap:anywhere; white-space:pre-wrap; }
+    footer { text-align:center; font-size:10px; color:var(--muted); padding-top:10px; }
+    @media(max-width:350px) { .brand-identity { --camper-width:56px; padding-left:63px; } .wordmark { font-size:20px; } }
+  </style>
+</head>
+<body>
+  <header><div class="wrap">
+    <div class="brand">
+      <div class="brand-identity">
+        <button class="camper" id="connect-all" type="button" aria-label="Alle zugeordneten Bluetooth-Geraete verbinden" aria-describedby="quick-start-status" title="Alle zugeordneten Bluetooth-Geraete verbinden">
+        <svg viewBox="0 0 144 60" aria-hidden="true">
+          <g class="camper-body">
+          <path fill="currentColor" fill-rule="evenodd" d="M7 13Q7 9 12 9h77q10 0 18 10l13 16 5 3q4 2 4 7v6h-5a12 12 0 0 0-24 0H43a12 12 0 0 0-24 0H7ZM98 20v15h16l-11-15Z"/>
+          <rect x="16" y="17" width="23" height="12" rx="2" fill="#f5f6f8"/>
+          <rect x="51" y="17" width="17" height="31" rx="2" fill="none" stroke="#f5f6f8" stroke-width="2"/>
+          <path d="M63 34h2" stroke="#f5f6f8" stroke-width="2" stroke-linecap="round"/>
+          </g>
+          <circle cx="31" cy="51" r="8" fill="currentColor"/>
+          <circle cx="112" cy="51" r="8" fill="currentColor"/>
+        </svg></button><div class="wordmark">campblick</div>
+      </div>
+      <input class="camper-name" id="camper-name" aria-label="Campername bearbeiten" aria-describedby="name-error" value="FIETE" maxlength="24" autocomplete="off" spellcheck="false" enterkeyhint="done">
+    </div>
+    <p class="error" id="name-error" role="status" hidden></p>
+    <p class="status" id="quick-start-status" role="status" hidden></p>
+    <h1>Gas, Batterie und Solar auf einen Blick.</h1>
+  </div></header>
+  <main class="wrap">
+    <details><summary>Bluetooth-Hinweise</summary><p id="environment-status" role="status">Dashboard wird geladen. Falls keine Anzeigen erscheinen: JavaScript pruefen.</p><p>Camper: grau = Bluetooth wird geprueft, ist aus oder kein Geraet zugeordnet; schwarz = bereit; faehrt = verbindet; gruen = alles verbunden. Ein Tipp auf den Camper verbindet alle zugeordneten Geraete. Neue Geraete bitte ueber die einzelne Anzeige zuordnen. Nach dem Neuoeffnen der Seite verlangt der Bluetooth Browser pro Geraet eine Bestaetigung (Auswahl zeigt nur das gespeicherte Geraet). Bleibt die Seite geoeffnet, verbindet der Tipp ohne Auswahl.</p><p>Automatische Wiederverbindung (Diagnose):</p><code id="reconnect-diagnosis" role="status">Noch kein Verbindungsversuch.</code></details>
+    <section aria-label="Versorgungsuebersicht"><div class="cards"></div></section>
+    <button class="add-display" id="add-display" type="button" aria-haspopup="dialog"><span aria-hidden="true">+</span> Anzeige hinzufuegen</button>
+    <p class="error" id="display-error" role="status" hidden></p>
+    <noscript><p class="notice">JavaScript ist deaktiviert. Dashboard und Bluetooth benoetigen JavaScript.</p></noscript>
+    <footer>LS Dashboard v1.0 - Keine Hersteller App</footer>
+  </main>
+  <template id="card-template">
+    <article class="card">
+      <div class="card-top"><span class="status" role="status">Nicht eingerichtet</span></div>
+      <h3></h3><p class="device"></p><div class="reading"></div>
+      <p class="low-warning" role="status" hidden>Fuellstand unter 20 %</p>
+      <div class="card-footer">
+        <p class="updated">Noch keine Messung</p>
+        <button class="bluetooth-button" type="button" aria-haspopup="dialog"><svg aria-hidden="true" viewBox="0 0 20 24"><path d="m4 6 12 12-6 5V1l6 5L4 18"/></svg>Geraet</button>
+        <button class="remove-display" type="button" title="Anzeige entfernen">&times;</button>
+      </div>
+    </article>
+  </template>
+  <template id="visual-gas">
+    <svg viewBox="0 0 60 72" aria-hidden="true">
+      <path class="outline" d="M21 15V6h18v9M27 6V2h6v4"/>
+      <rect class="vessel" x="13" y="15" width="34" height="51" rx="10"/>
+      <svg x="16" y="18" width="28" height="45" viewBox="0 0 28 45" overflow="hidden">
+        <rect class="level" data-level x="0" y="45" width="28" height="0"/>
+      </svg>
+      <path class="outline" d="M14 30h32M18 68h24"/>
+      <text class="unknown" data-unknown x="30" y="47">?</text>
+    </svg>
+  </template>
+  <template id="visual-battery">
+    <svg viewBox="0 0 60 72" aria-hidden="true">
+      <path class="outline" d="M23 11V5h14v6"/>
+      <rect class="vessel" x="13" y="11" width="34" height="56" rx="5"/>
+      <svg x="17" y="15" width="26" height="48" viewBox="0 0 26 48" overflow="hidden">
+        <rect class="level" data-level x="0" y="48" width="26" height="0"/>
+      </svg>
+      <path class="outline" d="M26 25h8m-4-4v8"/>
+      <text class="unknown" data-unknown x="30" y="48">?</text>
+    </svg>
+  </template>
+  <template id="visual-temperature">
+    <svg viewBox="0 0 60 72" aria-hidden="true">
+      <rect class="vessel" x="23" y="5" width="14" height="50" rx="7"/>
+      <circle class="vessel" cx="30" cy="58" r="10"/>
+      <svg x="27" y="10" width="6" height="42" viewBox="0 0 6 42" overflow="hidden">
+        <rect class="level" data-level x="0" y="42" width="6" height="0"/>
+      </svg>
+      <circle class="level" cx="30" cy="58" r="6.5"/>
+      <path class="outline" d="M40 15h4M40 25h4M40 35h4M40 45h4"/>
+      <text class="unknown" data-unknown x="50" y="36">?</text>
+    </svg>
+  </template>
+  <template id="visual-solar">
+    <svg viewBox="0 0 60 72" aria-hidden="true">
+      <g transform="translate(40 17)"><g class="sun" data-sun>
+        <circle r="7"/><path d="M0-10v-3M0 10v3M-10 0h-3M10 0h3M-7-7l-2-2M7 7l2 2M-7 7l-2 2M7-7l2-2"/>
+      </g></g>
+      <path class="panel-surface" d="M10 35h36l9 24H3Z"/>
+      <path class="outline" d="M22 35l-2 24M34 35l4 24M7 43h42M5 51h47M29 60v7m-10 0h20"/>
+      <text class="unknown" data-unknown x="28" y="54">?</text>
+    </svg>
+  </template>
+  <dialog id="device-dialog" aria-labelledby="device-dialog-title">
+    <h2 id="device-dialog-title">Bluetooth-Geraet</h2>
+    <p id="device-state" role="status"></p>
+    <div class="actions">
+      <button class="action" id="choose-device" type="button">Geraet auswaehlen</button>
+      <button class="action" id="reconnect-device" type="button">Verbinden</button>
+      <button class="action" id="disconnect-device" type="button">Trennen</button>
+      <button class="action" id="forget-device" type="button">Zuordnung loeschen</button>
+    </div>
+    <p class="notice">Snettbox: Ladestand und Batterieleistung werden live ausgewertet. Gasolina (in der Auswahl als &bdquo;UTS Tank Sensor&ldquo;): Fuellstand live, mit der App abgeglichen (39 %). SC330: Datenformat noch offen, deshalb bleibt Solar leer.</p>
+    <p>Es werden nur Messwerte gelesen, keine Steuerbefehle an die Geraete gesendet. Keine dauerhafte Hintergrundverbindung garantiert.</p>
+    <form method="dialog"><button class="action">Schliessen</button></form>
+  </dialog>
+  <dialog id="add-dialog" aria-labelledby="add-dialog-title">
+    <h2 id="add-dialog-title">Anzeige hinzufuegen</h2>
+    <form id="display-form" class="display-form">
+      <label>Art der Anzeige<select id="display-type"><option value="gas">Gasflasche</option><option value="battery">Batterie</option><option value="temperature">Temperatur (ueber Snettbox)</option><option value="solar">Solar</option></select></label>
+      <label>Name<input id="display-name" required maxlength="32" placeholder="z. B. Gasflasche 2" autocomplete="off"></label>
+      <button class="action" type="submit">Hinzufuegen</button>
+      <button class="action" id="cancel-display" type="button">Abbrechen</button>
+    </form>
+  </dialog>
+  <script>
+"use strict";
+function renderMeasurementVisual(card, type, value, solarMaximum = 330) {
+  const visual = card.querySelector(".measurement-visual");
+  const known = typeof value === "number" && Number.isFinite(value) && (type === "temperature" || (value >= 0 &&
+    (type === "solar" ? Number.isFinite(solarMaximum) && solarMaximum > 0 : value <= 100)));
+  const low = known && (type === "gas" || type === "battery") && value < 20;
+  card.classList.toggle("is-low", low);
+  card.querySelector(".low-warning").hidden = !low;
+  visual.classList.toggle("is-unknown", !known);
+  visual.setAttribute("aria-label", !known ? "Noch kein verifizierter Messwert" :
+    type === "solar" ? "Solarleistung: " + value.toLocaleString("de-DE") + " Watt" :
+    type === "temperature" ? "Temperatur: " + value.toLocaleString("de-DE") + " Grad Celsius" :
+    "Fuellstand: " + value.toLocaleString("de-DE") + " Prozent");
+  visual.querySelector("[data-unknown]").style.display = known ? "none" : "";
+  if (type === "solar") {
+    const sun = visual.querySelector("[data-sun]");
+    const ratio = known ? Math.min(value / solarMaximum, 1) : 0;
+    sun.setAttribute("transform", "scale(" + (known ? 0.4 + 0.6 * ratio : 0.55) + ")");
+    sun.style.display = known && value === 0 ? "none" : "";
+  } else {
+    const height = {gas:45, battery:48, temperature:42}[type];
+    // The thermometer scale spans -10 to 50 deg C.
+    const percent = type === "temperature" ? Math.min(Math.max((value + 10) / 60 * 100, 0), 100) : value;
+    const filled = known ? height * percent / 100 : 0;
+    const level = visual.querySelector("[data-level]");
+    level.setAttribute("y", String(height - filled));
+    level.setAttribute("height", String(filled));
+  }
+}
+(() => {
+  const $ = id => document.getElementById(id);
+  const types = ["gas", "battery", "temperature", "solar"];
+  const brands = {gas:"Gasolina", battery:"Snettbox", temperature:"Snettbox / 12-V-Seite", solar:"Dometic SC330"};
+  const storageKey = "campblick.displays.v1";
+  const unnamed = "Unbenanntes Bluetooth-Geraet";
+  // Snettbox streams CR-terminated JSON over the Microchip transparent UART service (verified on device FW 1.18).
+  const snettbox = {service:"49535343-fe7d-4ae5-8fa9-9fafd205e455", characteristic:"49535343-1e4d-4bd9-ba61-23c647249616"};
+  // Gasolina ("UTS Tank Sensor"): 8-byte record 45 LL LL BB xx 00 00 TT; LLLL/10 = fill level in percent
+  // (matches the app: 0x0183 = 38.7 % shown as 39 %), BB = sensor battery %, TT = deg C.
+  const gasolina = {service:"00001102-0000-1000-8000-00805f9b34fb", characteristic:"00001102-0001-1000-8000-00805f9b34fb"};
+  // FEFB (Stollmann Terminal I/O) is requested in advance for the planned SC330 solar evaluation.
+  const services = [snettbox.service, gasolina.service, "0000fefb-0000-1000-8000-00805f9b34fb"];
+  const knownNames = {battery:[{namePrefix:"Snettbox"}], gas:[{namePrefix:"@UTS"}, {name:"UTS Tank Sensor"}], solar:[{namePrefix:"SC330"}]};
+  const states = new Map();
+  const diagnosis = new Map();
+  let displays = [];
+  let selectedId = null;
+  let storageValid = true;
+  let connectingAll = false;
+  let needsTap = false;
+  let temperature = null;
+  const bluetooth = navigator.bluetooth;
+  const supported = window.isSecureContext && typeof bluetooth?.requestDevice === "function";
+  // null = still checking; browsers without getAvailability are treated as available.
+  let bluetoothAvailable = supported && typeof bluetooth.getAvailability === "function" ? null : supported;
+  function errorText(error) {
+    return error instanceof Error ? error.message : String(error);
+  }
+  function report(message) {
+    $("display-error").textContent = message;
+    $("display-error").hidden = false;
+  }
+  function save(next) {
+    if (!storageValid) {
+      report("Gespeicherte Konfiguration ist ungueltig. Vor Aenderungen die Browser-Daten sichern und korrigieren.");
+      return false;
+    }
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(next));
+      displays = next;
+      $("display-error").hidden = true;
+      return true;
+    } catch (error) {
+      report("Konfiguration nicht gespeichert: " + errorText(error));
+      return false;
+    }
+  }
+  function validDisplay(item) {
+    return item && typeof item.id === "string" && item.id.length > 0 &&
+      types.includes(item.type) && typeof item.name === "string" && item.name.trim().length > 0 && item.name.length <= 32 &&
+      (item.deviceId === undefined || typeof item.deviceId === "string") &&
+      (item.deviceName === undefined || typeof item.deviceName === "string") &&
+      (item.autoConnect === undefined || typeof item.autoConnect === "boolean");
+  }
+  try {
+    const stored = localStorage.getItem(storageKey);
+    const temperatureCard = {id:"default-temperature", type:"temperature", name:"Temperatur"};
+    if (stored === null) {
+      save([{id:"default-gas", type:"gas", name:"Gas"}, {id:"default-battery", type:"battery", name:"Batterie"},
+        temperatureCard, {id:"default-solar", type:"solar", name:"Solar"}]);
+    } else {
+      const parsed = JSON.parse(stored);
+      if (!Array.isArray(parsed) || !parsed.every(validDisplay) || new Set(parsed.map(item => item.id)).size !== parsed.length) {
+        throw new Error("Ungueltige Anzeigenkonfiguration");
+      }
+      displays = parsed;
+      // One-time addition for existing setups; a later removal by the user is respected.
+      if (!localStorage.getItem("campblick.temperatureAdded") && !parsed.some(item => item.type === "temperature")) {
+        const next = [...parsed];
+        const battery = next.findIndex(item => item.type === "battery");
+        next.splice(battery < 0 ? next.length : battery + 1, 0, temperatureCard);
+        save(next);
+      }
+    }
+    localStorage.setItem("campblick.temperatureAdded", "1");
+  } catch (error) {
+    storageValid = false;
+    report("Anzeigen konnten nicht geladen werden: " + errorText(error) + ". Gespeicherte Daten wurden nicht ueberschrieben.");
+  }
+  function current() { return states.get(selectedId); }
+  function connected(state) { return !!state.device?.gatt?.connected; }
+  function updateCamper() {
+    const assigned = [...states.values()].filter(state => state.display.deviceId);
+    const connecting = connectingAll || assigned.some(state => state.busy);
+    // offline (grey) -> ready (black) -> connecting (driving) -> connected (green)
+    const mode = connecting ? "connecting"
+      : assigned.length && assigned.every(connected) ? "connected"
+      : supported && bluetoothAvailable === true && assigned.length ? "ready" : "offline";
+    const brand = document.querySelector(".brand");
+    brand.dataset.camper = mode;
+    brand.classList.toggle("is-driving", connecting);
+    $("connect-all").disabled = connecting;
+    $("connect-all").setAttribute("aria-busy", String(connecting));
+    $("connect-all").setAttribute("aria-label", {
+      offline:!supported ? "Camper grau: Web Bluetooth nicht verfuegbar"
+        : bluetoothAvailable === null ? "Camper grau: Bluetooth wird geprueft"
+        : bluetoothAvailable === false ? "Camper grau: Bluetooth ist ausgeschaltet"
+        : "Camper grau: noch kein Geraet zugeordnet",
+      ready:"Camper bereit: tippen, um alle Geraete zu verbinden",
+      connecting:"Camper faehrt: Geraete werden verbunden",
+      connected:"Camper gruen: alle Geraete verbunden"
+    }[mode]);
+  }
+  // The temperature card has no device of its own; it mirrors the 12 V side sensors of a live Snettbox.
+  function renderTemperature(state) {
+    const live = [...states.values()].some(other => other.display.type === "battery" && other.live && connected(other));
+    const format = value => Math.round(value).toLocaleString("de-DE");
+    state.card.querySelector(".status").textContent = live ? "Ueber Snettbox / Live-Daten" : "Snettbox nicht verbunden";
+    state.card.querySelector(".device").textContent = brands.temperature;
+    state.card.querySelector(".reading-value").textContent = temperature ? format(temperature.value) + " \u00b0C" : "\u2014";
+    renderMeasurementVisual(state.card, "temperature", temperature?.value ?? null);
+    state.card.querySelector("dd").textContent = temperature ? temperature.values.map(format).join(" / ") + " \u00b0C" : "\u2014";
+    state.card.classList.toggle("is-stale", !!temperature && !live);
+    state.card.querySelector(".updated").textContent = temperature
+      ? "Stand: " + new Date(temperature.time).toLocaleTimeString("de-DE") : "Noch kein Messwert";
+  }
+  function refreshTemperature() {
+    for (const state of states.values()) if (state.display.type === "temperature") renderTemperature(state);
+  }
+  function update(state, status = state.status) {
+    updateCamper();
+    if (state.display.type === "temperature") { renderTemperature(state); return; }
+    if (state.display.type === "battery") refreshTemperature();
+    const isConnected = connected(state);
+    state.status = status;
+    state.card.querySelector(".status").textContent = status;
+    state.card.querySelector(".device").textContent = state.display.deviceName || brands[state.display.type];
+    state.card.classList.toggle("is-stale", !!state.values && !(isConnected && state.live));
+    state.card.querySelector(".updated").textContent = state.values
+      ? (isConnected && state.live ? "Live: " : "Letzter Wert: ") + new Date(state.values.time).toLocaleTimeString("de-DE")
+      : "Noch kein verifizierter Messwert";
+    if (selectedId === state.display.id) {
+      $("device-state").textContent = status + (state.display.deviceName ? " / " + state.display.deviceName : "");
+      $("choose-device").disabled = !supported || state.busy;
+      $("reconnect-device").disabled = !supported || state.busy || !state.display.deviceId || isConnected;
+      $("disconnect-device").disabled = state.busy || !isConnected;
+      $("forget-device").disabled = state.busy || !state.display.deviceId;
+    }
+  }
+  function clearRetry(state) {
+    clearTimeout(state.retryTimer);
+    state.retryTimer = null;
+  }
+  function stopLive(state) {
+    if (!state.live) return;
+    if (state.live.listener) state.live.characteristic.removeEventListener("characteristicvaluechanged", state.live.listener);
+    clearInterval(state.live.timer);
+    state.live = null;
+  }
+  function release(state) {
+    clearRetry(state);
+    stopLive(state);
+    if (state.device) {
+      state.device.removeEventListener("gattserverdisconnected", state.onDisconnect);
+      if (state.device.gatt?.connected) state.device.gatt.disconnect();
+    }
+    state.device = null;
+  }
+  function attach(state, device) {
+    if (!device.gatt) throw new Error("Dieses Geraet bietet keinen erreichbaren GATT-Server.");
+    if ([...states.values()].some(other => other !== state &&
+      (other.device?.id === device.id || other.display.deviceId === device.id))) {
+      throw new Error("Dieses Geraet ist bereits einer anderen Anzeige zugeordnet.");
+    }
+    release(state);
+    state.device = device;
+    device.addEventListener("gattserverdisconnected", state.onDisconnect);
+  }
+  function persistState(state, changes) {
+    const next = {...state.display, ...changes};
+    const saved = save(displays.map(item => item.id === next.id ? next : item));
+    state.display = next;
+    if (!saved) report("Zuordnung nur fuer diese Sitzung aktiv; Speichern fehlgeschlagen.");
+  }
+  function withTimeout(promise, ms, onTimeout = () => {}) {
+    let timer;
+    return Promise.race([promise, new Promise((resolve, reject) => {
+      timer = setTimeout(() => {
+        onTimeout();
+        reject(new Error("Zeitlimit erreicht. Geraetenaehe, Bluetooth und Hersteller-App pruefen."));
+      }, ms);
+    })]).finally(() => clearTimeout(timer));
+  }
+  function renderValues(state) {
+    const level = state.values?.level ?? null;
+    const power = state.values?.power ?? null;
+    state.card.querySelector(".reading-value").textContent = level === null ? "\u2014" : level.toLocaleString("de-DE") + " %";
+    renderMeasurementVisual(state.card, state.display.type, level);
+    const powerOutput = state.card.querySelector("dd");
+    if (powerOutput) {
+      // Snettbox reports negative battery power while charging (verified against rising SoC/voltage and the app).
+      powerOutput.textContent = power === null ? "\u2014" : Math.abs(power).toLocaleString("de-DE") + " W" +
+        (power < 0 ? " (laedt)" : power > 0 ? " (entlaedt)" : "");
+    }
+  }
+  function clearValues(state) {
+    state.values = null;
+    renderValues(state);
+  }
+  function showValues(state, values) {
+    state.values = {...values, time:Date.now()};
+    renderValues(state);
+    update(state);
+  }
+  function applySnettbox(state, text) {
+    let message;
+    try { message = JSON.parse(text); } catch { return; }
+    const root = message.SBC || message.SB;
+    // Only the detailed messages (roughly every few seconds to minutes) carry the 12 V side temperatures.
+    const temps = ["Tc", "T12", "T34"].map(key => root?.P?.[key]).filter(value => Number.isFinite(value) && value > -40 && value < 120);
+    if (temps.length) {
+      temperature = {value:Math.max(...temps), values:temps, time:Date.now()};
+      refreshTemperature();
+    }
+    const battery = root?.B;
+    if (!battery) return;
+    const values = {...state.values};
+    if (Number.isFinite(battery.SoC) && battery.SoC >= 0 && battery.SoC <= 100) values.level = battery.SoC;
+    if (Number.isFinite(battery.P)) values.power = battery.P;
+    if (values.level !== undefined || values.power !== undefined) showValues(state, values);
+  }
+  function applyGasolina(state, view) {
+    if (!view || view.byteLength < 8 || view.getUint8(0) !== 0x45) return;
+    const level = view.getUint16(1) / 10;
+    if (level >= 0 && level <= 100) showValues(state, {level:Math.round(level)});
+  }
+  const adapters = {
+    battery:{...snettbox, async start(state, characteristic) {
+      const decoder = new TextDecoder();
+      let buffer = "";
+      state.live.listener = event => {
+        buffer += decoder.decode(event.target.value, {stream:true});
+        const lines = buffer.split("\r");
+        buffer = lines.pop();
+        if (buffer.length > 8192) buffer = "";
+        for (const line of lines) if (line.trim()) applySnettbox(state, line.trim());
+      };
+      characteristic.addEventListener("characteristicvaluechanged", state.live.listener);
+      await withTimeout(characteristic.startNotifications(), 10000);
+    }},
+    gas:{...gasolina, async start(state, characteristic) {
+      const live = state.live;
+      const read = async () => {
+        if (live.reading) return;
+        live.reading = true;
+        try { applyGasolina(state, await withTimeout(characteristic.readValue(), 10000)); }
+        catch { /* the next poll retries; a lost connection is reported by gattserverdisconnected */ }
+        finally { live.reading = false; }
+      };
+      await read();
+      if (state.live === live) live.timer = setInterval(read, 20000);
+    }}
+  };
+  async function startLive(state) {
+    const adapter = adapters[state.display.type];
+    if (!adapter) return false;
+    let service;
+    try { service = await withTimeout(state.device.gatt.getPrimaryService(adapter.service), 10000); }
+    catch (error) {
+      if (error.name === "NotFoundError") return false;
+      if (error.name === "SecurityError") throw new Error("Freigabe fuer den Datendienst fehlt. Bitte Geraet einmal neu auswaehlen.");
+      throw error;
+    }
+    const characteristic = await withTimeout(service.getCharacteristic(adapter.characteristic), 10000);
+    state.live = {characteristic, listener:null, timer:null};
+    await adapter.start(state, characteristic);
+    return true;
+  }
+  async function connect(state, retry = false) {
+    if (state.busy || !state.device || !states.has(state.display.id)) return;
+    if (state.pendingConnect) {
+      update(state, "Vorheriger Verbindungsversuch laeuft noch. Bitte warten oder Bluetooth im Browser neu starten.");
+      return;
+    }
+    clearRetry(state);
+    if (!retry) state.retries = 0;
+    state.busy = true;
+    const device = state.device;
+    const operation = ++state.operation;
+    // The gas sensor sits in a shielded gas locker and advertises rarely, so allow it more time.
+    const slow = state.display.type === "gas";
+    update(state, slow ? "Verbindung wird aufgebaut (bis 45 s)" : "Verbindung wird aufgebaut");
+    try {
+      const pending = device.gatt.connect();
+      state.pendingConnect = pending;
+      pending.then(() => {
+        state.pendingConnect = null;
+        if (operation !== state.operation && device.gatt.connected) device.gatt.disconnect();
+      }, () => { state.pendingConnect = null; });
+      await withTimeout(pending, slow ? 45000 : 15000, () => { state.operation++; });
+      if (operation !== state.operation) return;
+      if (!device.gatt.connected) throw new Error("Geraet hat die Verbindung beendet.");
+      let live = false;
+      try { live = await startLive(state); }
+      catch (error) {
+        stopLive(state);
+        update(state, "Verbunden / Live-Daten nicht verfuegbar: " + errorText(error));
+        return;
+      }
+      if (operation !== state.operation) return;
+      update(state, live ? "Verbunden / Live-Daten" : "Verbunden / Datenformat offen");
+    } catch (error) {
+      update(state, "Verbindungsfehler: " + errorText(error));
+    } finally {
+      state.busy = false;
+      update(state);
+    }
+  }
+  function scheduleRetry(state) {
+    if (!state.display.autoConnect || !state.device || state.retries >= 2 || document.hidden) return;
+    state.retries++;
+    state.retryTimer = setTimeout(() => {
+      state.retryTimer = null;
+      if (states.has(state.display.id) && state.display.autoConnect && !document.hidden) {
+        connect(state, true).then(() => {
+          if (!connected(state) && !state.busy) scheduleRetry(state);
+        });
+      }
+    }, state.retries * 3000);
+  }
+  function addCard(display) {
+    const card = $("card-template").content.firstElementChild.cloneNode(true);
+    card.classList.add(display.type);
+    card.querySelector("h3").textContent = display.name;
+    const value = document.createElement("span");
+    value.className = "reading-value";
+    value.textContent = "\u2014";
+    const visual = document.createElement("span");
+    visual.className = "measurement-visual";
+    visual.setAttribute("role", "img");
+    visual.append($("visual-" + display.type).content.cloneNode(true));
+    card.querySelector(".reading").replaceChildren(visual, value);
+    renderMeasurementVisual(card, display.type, null);
+    const detail = {battery:"Netto-Lade-/Entladeleistung", temperature:"Einzelwerte (Tc / T12 / T34)"}[display.type];
+    if (detail) {
+      const row = document.createElement("div");
+      const dt = document.createElement("dt");
+      dt.textContent = detail;
+      const dd = document.createElement("dd");
+      dd.textContent = "\u2014";
+      row.append(dt, dd);
+      const dl = document.createElement("dl");
+      dl.append(row);
+      card.querySelector(".card-footer").before(dl);
+    }
+    const state = {display, card, device:null, busy:false, operation:0, retries:0, retryTimer:null, live:null, values:null,
+      status:display.deviceId ? "Gespeichert / nicht verbunden" : "Nicht eingerichtet"};
+    state.onDisconnect = () => {
+      stopLive(state);
+      update(state, "Getrennt / keine aktuellen Messwerte");
+      scheduleRetry(state);
+    };
+    states.set(display.id, state);
+    const button = card.querySelector(".bluetooth-button");
+    button.hidden = display.type === "temperature";
+    button.setAttribute("aria-label", "Bluetooth-Geraet fuer " + display.name + " verwalten");
+    button.addEventListener("click", () => {
+      selectedId = display.id;
+      $("device-dialog-title").textContent = state.display.name + " / Bluetooth";
+      update(state);
+      $("device-dialog").showModal();
+    });
+    const remove = card.querySelector(".remove-display");
+    remove.setAttribute("aria-label", display.name + ": Anzeige entfernen");
+    remove.addEventListener("click", () => {
+      if (state.busy) { report("Bitte den laufenden Bluetooth-Vorgang vor dem Entfernen abwarten."); return; }
+      if (!confirm('Anzeige "' + state.display.name + '" wirklich entfernen?')) return;
+      if (!save(displays.filter(item => item.id !== display.id))) return;
+      state.operation++;
+      release(state);
+      states.delete(display.id);
+      updateCamper();
+      refreshTemperature();
+      card.remove();
+      $("add-display").focus();
+    });
+    document.querySelector(".cards").append(card);
+    update(state);
+  }
+  function showDiagnosis(key, text) {
+    diagnosis.set(key, text);
+    $("reconnect-diagnosis").textContent = [...diagnosis.values()].join("\n");
+  }
+  function savedFilters(state) {
+    const name = state.display.deviceName;
+    return [...new Map([...(name && name !== unnamed ? [{name}] : []),
+      ...(knownNames[state.display.type] || [])].map(filter => [JSON.stringify(filter), filter])).values()];
+  }
+  async function findSavedDevice(state) {
+    if (state.device) return true;
+    if (typeof bluetooth.getDevices !== "function") {
+      showDiagnosis("browser", "getDevices wird von diesem Browser nicht unterstuetzt -> Bestaetigung pro Geraet noetig.");
+      return requestSavedDevice(state);
+    }
+    try {
+      const devices = await withTimeout(bluetooth.getDevices(), 10000);
+      let device = devices.find(item => item.id === state.display.deviceId);
+      let how = "Kennung";
+      if (!device) {
+        // iOS browsers may hand out a new device ID per session; fall back to the saved/known device name.
+        const filters = savedFilters(state);
+        const taken = new Set([...states.values()].filter(other => other !== state)
+          .flatMap(other => [other.display.deviceId, other.device?.id]).filter(Boolean));
+        device = devices.find(item => !taken.has(item.id) && item.name &&
+          filters.some(f => f.name === item.name || (f.namePrefix && item.name.startsWith(f.namePrefix))));
+        how = "Name";
+      }
+      showDiagnosis(state.display.id, state.display.name + ": getDevices liefert " + devices.length + " Geraet(e)" +
+        (devices.length ? " (" + devices.map(item => item.name || "ohne Namen").join(", ") + ")" : "") +
+        " -> " + (device ? "automatisch gefunden ueber " + how : "nicht gefunden, Bestaetigung noetig"));
+      if (device) {
+        attach(state, device);
+        if (device.id !== state.display.deviceId) persistState(state, {deviceId:device.id});
+        return true;
+      }
+    } catch (error) {
+      showDiagnosis(state.display.id, state.display.name + ": getDevices-Fehler: " + errorText(error));
+    }
+    return requestSavedDevice(state);
+  }
+  // Browsers without persistent permissions (e.g. Bluetooth Browser on iOS) need a new, filtered picker per session.
+  async function requestSavedDevice(state) {
+    const name = state.display.deviceName;
+    const filters = savedFilters(state);
+    update(state, "Bitte " + (name || "Geraet") + " in der Bluetooth-Auswahl bestaetigen");
+    let device;
+    try {
+      device = await bluetooth.requestDevice(filters.length ? {filters, optionalServices:services}
+        : {acceptAllDevices:true, optionalServices:services});
+    } catch (error) {
+      if (error.name === "NotFoundError") { update(state, "Auswahl abgebrochen. Zum Verbinden auf den Camper tippen."); return false; }
+      if (error.name === "SecurityError" || error.name === "NotAllowedError") {
+        needsTap = true;
+        update(state, "Zum Verbinden auf den Camper tippen.");
+        return false;
+      }
+      throw error;
+    }
+    attach(state, device);
+    persistState(state, {deviceId:device.id, deviceName:device.name || name});
+    return true;
+  }
+  async function prepareSaved(state, enableAutoConnect = false) {
+    if (!state || !states.has(state.display.id) || !state.display.deviceId || state.busy) return false;
+    if (state.pendingConnect) {
+      update(state, "Vorheriger Verbindungsversuch laeuft noch. Bitte warten oder Bluetooth im Browser neu starten.");
+      return false;
+    }
+    if (enableAutoConnect) persistState(state, {autoConnect:true});
+    if (connected(state)) return false;
+    clearRetry(state);
+    state.busy = true; update(state);
+    try { return await findSavedDevice(state); }
+    catch (error) { update(state, "Wiederverbindung nicht moeglich: " + errorText(error)); return false; }
+    finally { state.busy = false; update(state); }
+  }
+  $("choose-device").addEventListener("click", async () => {
+    const state = current();
+    if (!state || state.busy || !supported) return;
+    state.busy = true;
+    clearRetry(state);
+    update(state, "Bitte Geraet in der Bluetooth-Auswahl waehlen");
+    try {
+      // requestDevice must run directly inside the click, before awaiting any other work.
+      const device = await bluetooth.requestDevice({acceptAllDevices:true, optionalServices:services});
+      attach(state, device);
+      persistState(state, {deviceId:device.id, deviceName:device.name || unnamed, autoConnect:true});
+      clearValues(state);
+      update(state, "Geraet ausgewaehlt");
+    } catch (error) {
+      update(state, error.name === "NotFoundError" ? "Auswahl abgebrochen oder kein Geraet ausgewaehlt" : "Geraeteauswahl fehlgeschlagen: " + errorText(error));
+      return;
+    } finally {
+      state.busy = false;
+      update(state);
+    }
+    await connect(state);
+  });
+  $("reconnect-device").addEventListener("click", async () => {
+    const state = current();
+    try { if (await prepareSaved(state, true)) await connect(state); }
+    catch (error) { report("Wiederverbindung fehlgeschlagen: " + errorText(error)); }
+  });
+  $("disconnect-device").addEventListener("click", () => {
+    const state = current();
+    if (!state || state.busy) return;
+    persistState(state, {autoConnect:false});
+    state.operation++;
+    // Keep the device object so the next camper tap reconnects without a new picker.
+    clearRetry(state);
+    stopLive(state);
+    if (connected(state)) state.device.gatt.disconnect();
+    update(state, "Getrennt / automatisch verbinden pausiert");
+  });
+  $("forget-device").addEventListener("click", () => {
+    const state = current();
+    if (!state || state.busy || !confirm("Gespeicherte Geraetezuordnung wirklich loeschen?")) return;
+    const next = {id:state.display.id, type:state.display.type, name:state.display.name};
+    if (!save(displays.map(item => item.id === next.id ? next : item))) return;
+    state.display = next;
+    state.operation++;
+    release(state);
+    clearValues(state);
+    update(state, "Nicht eingerichtet");
+  });
+  const camperName = $("camper-name");
+  const nameError = text => { $("name-error").textContent = text; $("name-error").hidden = false; };
+  try { camperName.value = localStorage.getItem("campblick.camperName") || "FIETE"; }
+  catch (error) { nameError("Name nicht geladen: " + errorText(error)); }
+  camperName.addEventListener("change", () => {
+    const name = camperName.value.trim();
+    if (!name) { nameError("Bitte einen Namen eintragen."); return; }
+    try {
+      localStorage.setItem("campblick.camperName", name); camperName.value = name; $("name-error").hidden = true;
+    } catch (error) { nameError("Name nicht gespeichert: " + errorText(error)); }
+  });
+  camperName.addEventListener("keydown", event => { if (event.key === "Enter") camperName.blur(); });
+  $("add-display").addEventListener("click", () => {
+    $("display-form").reset(); $("display-name").setCustomValidity(""); $("add-dialog").showModal();
+  });
+  $("cancel-display").addEventListener("click", () => $("add-dialog").close());
+  $("display-name").addEventListener("input", () => $("display-name").setCustomValidity(""));
+  $("display-form").addEventListener("submit", event => {
+    event.preventDefault();
+    const name = $("display-name").value.trim();
+    if (!name) { $("display-name").setCustomValidity("Bitte einen Namen eintragen."); $("display-name").reportValidity(); return; }
+    const display = {id:crypto.randomUUID(), type:$("display-type").value, name};
+    if (save([...displays, display])) { addCard(display); $("add-dialog").close(); }
+  });
+  displays.forEach(addCard);
+  async function connectAll(manual = false) {
+    if (connectingAll) return;
+    const status = $("quick-start-status");
+    const showStatus = text => { status.textContent = text; status.hidden = false; };
+    if (!supported) {
+      if (manual) showStatus("Web Bluetooth ist in diesem Browser nicht verfuegbar.");
+      return;
+    }
+    const assigned = [...states.values()].filter(state => state.display.deviceId && (manual || state.display.autoConnect));
+    if (!assigned.length) {
+      if (manual) showStatus("Bitte zuerst ueber Geraet eine Bluetooth-Zuordnung einrichten.");
+      return;
+    }
+    connectingAll = true;
+    needsTap = false;
+    updateCamper();
+    showStatus("Zugeordnete Bluetooth-Geraete werden verbunden ...");
+    try {
+      // Confirm all pickers first (they need the user's taps), then connect in parallel so a slow sensor blocks nothing.
+      const ready = [];
+      for (const state of assigned) {
+        if (await prepareSaved(state, manual)) ready.push(state);
+      }
+      await Promise.all(ready.map(state => connect(state)));
+      const remaining = assigned.filter(state => states.has(state.display.id) && state.display.deviceId);
+      const count = remaining.filter(connected).length;
+      showStatus(!remaining.length ? "Keine zugeordneten Geraete mehr vorhanden."
+        : count === remaining.length ? "Alle " + count + " zugeordneten Geraete sind verbunden."
+        : count + " von " + remaining.length + " Geraeten verbunden. " +
+          (needsTap ? "Zum Verbinden der uebrigen auf den Camper tippen." : "Details unter Geraet."));
+    } finally {
+      connectingAll = false;
+      updateCamper();
+    }
+  }
+  $("connect-all").addEventListener("click", () => {
+    connectAll(true).catch(error => report("Quick-Start fehlgeschlagen: " + errorText(error)));
+  });
+  $("environment-status").textContent = !supported
+    ? "Web Bluetooth ist in diesem Kontext nicht verfuegbar. Einen kompatiblen Bluetooth-Browser verwenden."
+    : "Snettbox: Ladestand und Leistung live. Temperatur: hoechster der drei Sensoren auf der 12-V-Seite der Snettbox (Tc, T12, T34); wird nur mit den ausfuehrlichen Snettbox-Meldungen aktualisiert, daher die Zeitangabe \"Stand\". Gasolina (\"UTS Tank Sensor\"): Fuellstand alle 20 Sekunden, mit der App abgeglichen (39 %). SC330: Datenformat noch offen. Hersteller-Apps vorher schliessen, da die Geraete meist nur eine Verbindung gleichzeitig erlauben.";
+  // No automatic pickers on open: everything starts with one tap on the camper.
+  if (bluetoothAvailable === null) {
+    bluetooth.getAvailability().then(available => { bluetoothAvailable = available; }, () => { bluetoothAvailable = true; })
+      .finally(updateCamper);
+    bluetooth.addEventListener?.("availabilitychanged", event => { bluetoothAvailable = !!event.value; updateCamper(); });
+  }
+  updateCamper();
+})();
+
+</script>
+</body>
+</html>
