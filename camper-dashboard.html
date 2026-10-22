@@ -22,12 +22,6 @@
     :focus-visible { outline:3px solid #ba6d2b; outline-offset:3px; }
     [hidden] { display:none!important; }
     header { padding:18px 16px 12px; padding-top:calc(18px + env(safe-area-inset-top, 0px)); }
-    @supports (-webkit-touch-callout:none) {
-      /* Browsers with their own toolbar may not report the notch; installed web apps start below the status bar. */
-      @media not all and (display-mode: standalone) {
-        header { padding-top:calc(18px + max(59px, env(safe-area-inset-top, 0px))); }
-      }
-    }
     .wrap { max-width:760px; margin:auto; }
     .brand { display:flex; align-items:center; justify-content:space-between; gap:12px; }
     .wordmark { font-weight:750; font-size:23px; letter-spacing:-1px; }

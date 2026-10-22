@@ -603,9 +603,30 @@ function renderMeasurementVisual(card, type, value, solarMaximum = 330) {
   $("connect-all").addEventListener("click", () => {
     connectAll(true).catch(error => report("Quick-Start fehlgeschlagen: " + errorText(error)));
   });
+  // Back in the foreground: reconnect devices already approved in this session; no picker, so no tap is needed.
+  let resumeTimer = null;
+  function resumeConnections(source) {
+    clearTimeout(resumeTimer);
+    resumeTimer = setTimeout(() => {
+      if (document.hidden || connectingAll) return;
+      const waiting = [...states.values()].filter(state => state.device && state.display.autoConnect &&
+        !connected(state) && !state.busy && !state.pendingConnect);
+      if (!waiting.length) return;
+      showDiagnosis("resume", "Zurueck im Vordergrund (" + source + "): " + waiting.length + " Geraet(e) werden ohne Auswahl neu verbunden.");
+      waiting.forEach(state => connect(state));
+    }, 800);
+  }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) resumeConnections("Seite sichtbar"); });
+  if (supported && typeof bluetooth.addEventListener === "function") {
+    bluetooth.addEventListener("backgroundstatechanged", event => {
+      // Bluefy-specific event; its payload is undocumented, so a value of true is read as "went to background".
+      const background = event?.isInBackground ?? event?.background ?? event?.value ?? event?.detail;
+      if (background !== true) resumeConnections("Bluefy");
+    });
+  }
   $("environment-status").textContent = !supported
     ? "Web Bluetooth ist in diesem Kontext nicht verfuegbar. Einen kompatiblen Bluetooth-Browser verwenden."
-    : "Snettbox: Ladestand und Leistung live. Temperatur: hoechster der drei Sensoren auf der 12-V-Seite der Snettbox (Tc, T12, T34); wird nur mit den ausfuehrlichen Snettbox-Meldungen aktualisiert, daher die Zeitangabe \"Stand\". Gasolina (\"UTS Tank Sensor\"): Fuellstand alle 20 Sekunden, mit der App abgeglichen (39 %). SC330: Datenformat noch offen. Hersteller-Apps vorher schliessen, da die Geraete meist nur eine Verbindung gleichzeitig erlauben.";
+    : "Snettbox: Ladestand und Leistung live. Temperatur: hoechster der drei Sensoren auf der 12-V-Seite der Snettbox (Tc, T12, T34); wird nur mit den ausfuehrlichen Snettbox-Meldungen aktualisiert, daher die Zeitangabe \"Stand\". Gasolina (\"UTS Tank Sensor\"): Fuellstand alle 20 Sekunden, mit der App abgeglichen (39 %). SC330: Datenformat noch offen. Hersteller-Apps vorher schliessen, da die Geraete meist nur eine Verbindung gleichzeitig erlauben. Kommt der Browser wieder in den Vordergrund, verbinden sich bereits bestaetigte Geraete automatisch neu.";
   // No automatic pickers on open: everything starts with one tap on the camper.
   if (bluetoothAvailable === null) {
     bluetooth.getAvailability().then(available => { bluetoothAvailable = available; }, () => { bluetoothAvailable = true; })

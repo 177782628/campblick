@@ -12,11 +12,25 @@ Bauen: `build.ps1` im Projektordner erzeugt `ls-dashboard-aktuell.html` (aktuell
 Downloads-Ordner) und `docs/index.html` (Online-Version, https://177782628.github.io/campblick/).
 `build.ps1 -Version v1.1` legt eine neue, schreibgeschuetzte Version an.
 
+## Einrichtung auf dem iPhone
+
+- Browser: **Nuviu** (App Store, kostenlos). Web Bluetooth funktioniert dort mit der Online-Adresse.
+- Start ueber einen Kurzbefehl auf dem Homebildschirm, der https://177782628.github.io/campblick/ in Nuviu oeffnet.
+- Browserleiste ausblenden: in Nuviu **mit zwei Fingern doppelt tippen**. Nuviu merkt sich das, auch nachdem die
+  App komplett geschlossen wurde.
+- Alternative: Bluefy mit Kurzbefehl `bluefy://open?url=https://177782628.github.io/campblick/` (Leiste bleibt sichtbar).
+- Als Safari-Homebildschirm-App funktioniert die Anzeige, aber iOS erlaubt dort kein Bluetooth.
+
 ## In Arbeit (nach v1.0)
 
 - Gasflasche: Fuellung mit abgerundeten Ecken, passt jetzt in die Flaschenkontur (Farbe gelb/rot unveraendert)
 - Web-App: Manifest und App-Symbol (weisser Camper auf Gruen) im Ordner `web/`, werden mit der Online-Version
-  veroeffentlicht; als Homebildschirm-App kein zusaetzlicher Abstand fuer die Kameraaussparung
+  veroeffentlicht
+- Oberer Abstand: fester Zusatzabstand (59 px) fuer die Kameraaussparung entfernt; Bluefy und Safari melden
+  die Aussparung selbst (`env(safe-area-inset-top)`). Im alten Bluetooth Browser kann die Ueberschrift dadurch
+  wieder unter die Aussparung rutschen.
+- Automatisches Neuverbinden, wenn der Browser wieder in den Vordergrund kommt (Bluefy-Ereignis
+  `backgroundstatechanged` und Sichtbarkeit der Seite); nur fuer bereits bestaetigte, nicht von Hand getrennte Geraete
 
 ## v1.0 – 22.10.2026
 
