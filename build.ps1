@@ -17,11 +17,14 @@ if ($Version) {
   $name = "ls-dashboard-$Version.html"
   $target = Join-Path $dir $name
   Copy-Item -LiteralPath (Join-Path $root 'camper-dashboard.html'), (Join-Path $root 'camper-bluetooth.js') -Destination $dir
+  Copy-Item -LiteralPath (Join-Path $root 'web') -Destination $dir -Recurse
 } else {
   $name = 'ls-dashboard-aktuell.html'
   $target = Join-Path $root $name
   $docs = New-Item -ItemType Directory -Force -Path (Join-Path $root 'docs')
   [IO.File]::WriteAllText((Join-Path $docs.FullName 'index.html'), $bundle, [Text.UTF8Encoding]::new($false))
+  # Manifest and icons are only used by the online version (installed web app / home screen icon).
+  Copy-Item -Path (Join-Path $root 'web\*') -Destination $docs.FullName -Force
 }
 [IO.File]::WriteAllText($target, $bundle, [Text.UTF8Encoding]::new($false))
 Copy-Item -LiteralPath $target -Destination (Join-Path $downloads $name) -Force

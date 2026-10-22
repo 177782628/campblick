@@ -15,6 +15,8 @@ Downloads-Ordner) und `docs/index.html` (Online-Version, https://177782628.githu
 ## In Arbeit (nach v1.0)
 
 - Gasflasche: Fuellung mit abgerundeten Ecken, passt jetzt in die Flaschenkontur (Farbe gelb/rot unveraendert)
+- Web-App: Manifest und App-Symbol (weisser Camper auf Gruen) im Ordner `web/`, werden mit der Online-Version
+  veroeffentlicht; als Homebildschirm-App kein zusaetzlicher Abstand fuer die Kameraaussparung
 
 ## v1.0 – 22.10.2026
 

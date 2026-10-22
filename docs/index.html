@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f5f6f8">
   <title>Campblick | LS Dashboard</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Campblick">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <style>
     :root { color-scheme:light; --ink:#202833; --muted:#616b78; --paper:#f5f6f8; --line:#e3e7ec; }
     * { box-sizing:border-box; }
@@ -16,7 +23,10 @@
     [hidden] { display:none!important; }
     header { padding:18px 16px 12px; padding-top:calc(18px + env(safe-area-inset-top, 0px)); }
     @supports (-webkit-touch-callout:none) {
-      header { padding-top:calc(18px + max(59px, env(safe-area-inset-top, 0px))); }
+      /* Browsers with their own toolbar may not report the notch; installed web apps start below the status bar. */
+      @media not all and (display-mode: standalone) {
+        header { padding-top:calc(18px + max(59px, env(safe-area-inset-top, 0px))); }
+      }
     }
     .wrap { max-width:760px; margin:auto; }
     .brand { display:flex; align-items:center; justify-content:space-between; gap:12px; }
