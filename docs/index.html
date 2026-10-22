@@ -197,6 +197,7 @@
     <p id="device-state" role="status"></p>
     <div class="actions">
       <button class="action" id="choose-device" type="button">Geraet auswaehlen</button>
+      <button class="action" id="choose-any-device" type="button">Alle Geraete anzeigen</button>
       <button class="action" id="reconnect-device" type="button">Verbinden</button>
       <button class="action" id="disconnect-device" type="button">Trennen</button>
       <button class="action" id="forget-device" type="button">Zuordnung loeschen</button>
@@ -379,6 +380,7 @@ function renderMeasurementVisual(card, type, value, solarMaximum = 330) {
     if (selectedId === state.display.id) {
       $("device-state").textContent = status + (state.display.deviceName ? " / " + state.display.deviceName : "");
       $("choose-device").disabled = !supported || state.busy;
+      $("choose-any-device").disabled = !supported || state.busy;
       $("reconnect-device").disabled = !supported || state.busy || !state.display.deviceId || isConnected;
       $("disconnect-device").disabled = state.busy || !isConnected;
       $("forget-device").disabled = state.busy || !state.display.deviceId;
@@ -708,28 +710,35 @@ function renderMeasurementVisual(card, type, value, solarMaximum = 330) {
     catch (error) { update(state, "Wiederverbindung nicht moeglich: " + errorText(error)); return false; }
     finally { state.busy = false; update(state); }
   }
-  $("choose-device").addEventListener("click", async () => {
+  // Name filters make browsers check the advertised name; Nuviu omits name-only devices from its "all devices" list.
+  async function chooseDevice(all) {
     const state = current();
     if (!state || state.busy || !supported) return;
+    const filters = knownNames[state.display.type];
     state.busy = true;
     clearRetry(state);
     update(state, "Bitte Geraet in der Bluetooth-Auswahl waehlen");
     try {
       // requestDevice must run directly inside the click, before awaiting any other work.
-      const device = await bluetooth.requestDevice({acceptAllDevices:true, optionalServices:services});
+      const device = await bluetooth.requestDevice(all || !filters ? {acceptAllDevices:true, optionalServices:services}
+        : {filters, optionalServices:services});
       attach(state, device);
       persistState(state, {deviceId:device.id, deviceName:device.name || unnamed, autoConnect:true});
       clearValues(state);
       update(state, "Geraet ausgewaehlt");
     } catch (error) {
-      update(state, error.name === "NotFoundError" ? "Auswahl abgebrochen oder kein Geraet ausgewaehlt" : "Geraeteauswahl fehlgeschlagen: " + errorText(error));
+      update(state, error.name === "NotFoundError"
+        ? "Auswahl abgebrochen oder kein Geraet gefunden" + (all ? "" : ". Sonst \"Alle Geraete anzeigen\" verwenden.")
+        : "Geraeteauswahl fehlgeschlagen: " + errorText(error));
       return;
     } finally {
       state.busy = false;
       update(state);
     }
     await connect(state);
-  });
+  }
+  $("choose-device").addEventListener("click", () => chooseDevice(false));
+  $("choose-any-device").addEventListener("click", () => chooseDevice(true));
   $("reconnect-device").addEventListener("click", async () => {
     const state = current();
     try { if (await prepareSaved(state, true)) await connect(state); }

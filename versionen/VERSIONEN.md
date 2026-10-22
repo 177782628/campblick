@@ -31,6 +31,8 @@ Downloads-Ordner) und `docs/index.html` (Online-Version, https://177782628.githu
   wieder unter die Aussparung rutschen.
 - Automatisches Neuverbinden, wenn der Browser wieder in den Vordergrund kommt (Bluefy-Ereignis
   `backgroundstatechanged` und Sichtbarkeit der Seite); nur fuer bereits bestaetigte, nicht von Hand getrennte Geraete
+- „Geraet auswaehlen“ sucht gezielt nach dem Geraetenamen (Snettbox…, @UTS…/UTS Tank Sensor, SC330…), weil Nuviu
+  Geraete, die nur ihren Namen aussenden, in der Liste „alle Geraete“ nicht zeigt; neuer Knopf „Alle Geraete anzeigen“
 
 ## v1.0 – 22.10.2026
 
