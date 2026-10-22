@@ -27,8 +27,10 @@ Downloads-Ordner) und `docs/index.html` (Online-Version, https://177782628.githu
 - Web-App: Manifest und App-Symbol (weisser Camper auf Gruen) im Ordner `web/`, werden mit der Online-Version
   veroeffentlicht
 - Oberer Abstand: fester Zusatzabstand (59 px) fuer die Kameraaussparung entfernt; Bluefy und Safari melden
-  die Aussparung selbst (`env(safe-area-inset-top)`). Im alten Bluetooth Browser kann die Ueberschrift dadurch
-  wieder unter die Aussparung rutschen.
+  die Aussparung selbst (`env(safe-area-inset-top)`).
+- Bluetooth Browser: zieht die Seite nach dem Scrollen unter die Kameraaussparung, ohne sie zu melden. Das
+  Dashboard erkennt das (Seite so hoch wie der Bildschirm, keine gemeldete Aussparung) und fuegt dann 59 px hinzu.
+  Messwerte stehen unter „Bluetooth-Hinweise“ → „Abstand oben (Diagnose)“.
 - Automatisches Neuverbinden, wenn der Browser wieder in den Vordergrund kommt (Bluefy-Ereignis
   `backgroundstatechanged` und Sichtbarkeit der Seite); nur fuer bereits bestaetigte, nicht von Hand getrennte Geraete
 - „Geraet auswaehlen“ sucht gezielt nach dem Geraetenamen (Snettbox…, @UTS…/UTS Tank Sensor, SC330…), weil Nuviu

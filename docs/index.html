@@ -21,7 +21,8 @@
     button:disabled { cursor:wait; opacity:.55; }
     :focus-visible { outline:3px solid #ba6d2b; outline-offset:3px; }
     [hidden] { display:none!important; }
-    header { padding:18px 16px 12px; padding-top:calc(18px + env(safe-area-inset-top, 0px)); }
+    header { padding:18px 16px 12px; padding-top:calc(18px + max(env(safe-area-inset-top, 0px), var(--notch-fallback, 0px))); }
+    .safe-area-probe { position:fixed; top:0; left:0; width:0; height:env(safe-area-inset-top, 0px); visibility:hidden; pointer-events:none; }
     .wrap { max-width:760px; margin:auto; }
     .brand { display:flex; align-items:center; justify-content:space-between; gap:12px; }
     .wordmark { font-weight:750; font-size:23px; letter-spacing:-1px; }
@@ -127,7 +128,7 @@
     <h1>Gas, Batterie und Solar auf einen Blick.</h1>
   </div></header>
   <main class="wrap">
-    <details><summary>Bluetooth-Hinweise</summary><p id="environment-status" role="status">Dashboard wird geladen. Falls keine Anzeigen erscheinen: JavaScript pruefen.</p><p>Camper: grau = Bluetooth wird geprueft, ist aus oder kein Geraet zugeordnet; schwarz = bereit; faehrt = verbindet; gruen = alles verbunden. Ein Tipp auf den Camper verbindet alle zugeordneten Geraete. Neue Geraete bitte ueber die einzelne Anzeige zuordnen. Nach dem Neuoeffnen der Seite verlangt der Bluetooth Browser pro Geraet eine Bestaetigung (Auswahl zeigt nur das gespeicherte Geraet). Bleibt die Seite geoeffnet, verbindet der Tipp ohne Auswahl.</p><p>Automatische Wiederverbindung (Diagnose):</p><code id="reconnect-diagnosis" role="status">Noch kein Verbindungsversuch.</code></details>
+    <details><summary>Bluetooth-Hinweise</summary><p id="environment-status" role="status">Dashboard wird geladen. Falls keine Anzeigen erscheinen: JavaScript pruefen.</p><p>Camper: grau = Bluetooth wird geprueft, ist aus oder kein Geraet zugeordnet; schwarz = bereit; faehrt = verbindet; gruen = alles verbunden. Ein Tipp auf den Camper verbindet alle zugeordneten Geraete. Neue Geraete bitte ueber die einzelne Anzeige zuordnen. Nach dem Neuoeffnen der Seite verlangt der Bluetooth Browser pro Geraet eine Bestaetigung (Auswahl zeigt nur das gespeicherte Geraet). Bleibt die Seite geoeffnet, verbindet der Tipp ohne Auswahl.</p><p>Automatische Wiederverbindung (Diagnose):</p><code id="reconnect-diagnosis" role="status">Noch kein Verbindungsversuch.</code><p>Abstand oben (Diagnose):</p><code id="notch-diagnosis">wird gemessen ...</code></details>
     <section aria-label="Versorgungsuebersicht"><div class="cards"></div></section>
     <button class="add-display" id="add-display" type="button" aria-haspopup="dialog"><span aria-hidden="true">+</span> Anzeige hinzufuegen</button>
     <p class="error" id="display-error" role="status" hidden></p>
@@ -245,6 +246,35 @@ function renderMeasurementVisual(card, type, value, solarMaximum = 330) {
     level.setAttribute("height", String(filled));
   }
 }
+(() => {
+  // Some iOS BLE browsers (e.g. Bluetooth Browser) stretch the page under the status bar after scrolling
+  // without reporting env(safe-area-inset-top). Add the notch height only while the page fills the whole screen.
+  const probe = document.createElement("div");
+  probe.className = "safe-area-probe";
+  document.body.append(probe);
+  const iOS = /iPhone|iPod/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
+  let scheduled = false;
+  function updateNotch() {
+    scheduled = false;
+    const reported = probe.getBoundingClientRect().height;
+    const portrait = innerHeight >= innerWidth;
+    const screenHeight = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+    const height = Math.max(innerHeight, visualViewport?.height || 0);
+    const fullScreen = height >= screenHeight - 2;
+    const fallback = iOS && portrait && fullScreen && reported < 1 ? 59 : 0;
+    document.documentElement.style.setProperty("--notch-fallback", fallback + "px");
+    const info = document.getElementById("notch-diagnosis");
+    if (info) info.textContent = "Bildschirm " + screenHeight + " px / Seite " + Math.round(height) +
+      " px / Aussparung gemeldet " + Math.round(reported) + " px / Zusatzabstand " + fallback + " px";
+  }
+  const schedule = () => { if (!scheduled) { scheduled = true; requestAnimationFrame(updateNotch); } };
+  for (const target of [window, window.visualViewport].filter(Boolean)) {
+    target.addEventListener("resize", schedule);
+    target.addEventListener("scroll", schedule, {passive:true});
+  }
+  addEventListener("orientationchange", schedule);
+  updateNotch();
+})();
 (() => {
   const $ = id => document.getElementById(id);
   const types = ["gas", "battery", "temperature", "solar"];

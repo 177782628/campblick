@@ -28,6 +28,35 @@ function renderMeasurementVisual(card, type, value, solarMaximum = 330) {
   }
 }
 (() => {
+  // Some iOS BLE browsers (e.g. Bluetooth Browser) stretch the page under the status bar after scrolling
+  // without reporting env(safe-area-inset-top). Add the notch height only while the page fills the whole screen.
+  const probe = document.createElement("div");
+  probe.className = "safe-area-probe";
+  document.body.append(probe);
+  const iOS = /iPhone|iPod/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
+  let scheduled = false;
+  function updateNotch() {
+    scheduled = false;
+    const reported = probe.getBoundingClientRect().height;
+    const portrait = innerHeight >= innerWidth;
+    const screenHeight = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+    const height = Math.max(innerHeight, visualViewport?.height || 0);
+    const fullScreen = height >= screenHeight - 2;
+    const fallback = iOS && portrait && fullScreen && reported < 1 ? 59 : 0;
+    document.documentElement.style.setProperty("--notch-fallback", fallback + "px");
+    const info = document.getElementById("notch-diagnosis");
+    if (info) info.textContent = "Bildschirm " + screenHeight + " px / Seite " + Math.round(height) +
+      " px / Aussparung gemeldet " + Math.round(reported) + " px / Zusatzabstand " + fallback + " px";
+  }
+  const schedule = () => { if (!scheduled) { scheduled = true; requestAnimationFrame(updateNotch); } };
+  for (const target of [window, window.visualViewport].filter(Boolean)) {
+    target.addEventListener("resize", schedule);
+    target.addEventListener("scroll", schedule, {passive:true});
+  }
+  addEventListener("orientationchange", schedule);
+  updateNotch();
+})();
+(() => {
   const $ = id => document.getElementById(id);
   const types = ["gas", "battery", "temperature", "solar"];
   const brands = {gas:"Gasolina", battery:"Snettbox", temperature:"Snettbox / 12-V-Seite", solar:"Dometic SC330"};
