@@ -265,7 +265,10 @@ function renderMeasurementVisual(card, type, value, solarMaximum = 330) {
     document.documentElement.style.setProperty("--notch-fallback", fallback + "px");
     const info = document.getElementById("notch-diagnosis");
     if (info) info.textContent = "Bildschirm " + screenHeight + " px / Seite " + Math.round(height) +
-      " px / Aussparung gemeldet " + Math.round(reported) + " px / Zusatzabstand " + fallback + " px";
+      " px / Aussparung gemeldet " + Math.round(reported) + " px / Zusatzabstand " + fallback + " px" +
+      " / Scroll " + Math.round(scrollY) + " / Sichtbereich " + Math.round(visualViewport?.offsetTop ?? -1) +
+      "," + Math.round(visualViewport?.pageTop ?? -1) + " / Kopf " + Math.round(document.querySelector("header")?.getBoundingClientRect().top ?? -1) +
+      " / Browser: " + navigator.userAgent.replace(/^Mozilla\/5\.0 /, "").slice(0, 160);
   }
   const schedule = () => { if (!scheduled) { scheduled = true; requestAnimationFrame(updateNotch); } };
   for (const target of [window, window.visualViewport].filter(Boolean)) {
