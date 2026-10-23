@@ -24,9 +24,20 @@ Downloads-Ordner) und `docs/index.html` (Online-Version, https://177782628.githu
   - Safari mit Erweiterung beacio: funktioniert nur im Safari-Tab, nicht als Homebildschirm-App.
 - Als Safari-Homebildschirm-App funktioniert die Anzeige, aber iOS erlaubt dort kein Bluetooth.
 
+## Geplant
+
+- Offline-Betrieb: Die App soll auch ohne Internet starten (lokale Datei oder Offline-Speicher der Online-Version).
+  Wird eingebaut, sobald die App komplett laeuft.
+- Solar (SC330): Datenformat per Mitschnitt der Buettner-App ermitteln (Mac mit PacketLogger).
+
 ## In Arbeit (nach v1.1, Fusszeile „v1.2-Entwurf“)
 
-- noch keine Aenderungen
+- Abstand oben im Bluetooth Browser: Nach dem ersten Scrollen laesst der Browser die Seite nicht mehr ganz nach
+  oben (federt auf 62 px zurueck, gemessen auf dem iPhone mit iOS 18.7). Kommt das Hochscrollen kurz vor dem
+  oberen Rand zum Stehen, springt das Dashboard einmal nach oben; verweigert der Browser das, wird genau dieser
+  Versatz oben als Abstand eingefuegt. Die alte Erkennung ueber die Seitenhoehe (griff nicht) ist entfernt.
+- „Bluetooth-Hinweise“ aufgeraeumt: kurze Statuszeile, eingeklappter Bereich „Entwicklerinfos“ (Abstand oben,
+  Verbindung) und vier kurze Punkte (Camper, Geraete, Tipp, Aktualisierung); veraltete Texte entfernt.
 
 ## v1.1 – 23.10.2026
 

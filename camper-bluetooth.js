@@ -28,37 +28,57 @@ function renderMeasurementVisual(card, type, value, solarMaximum = 330) {
   }
 }
 (() => {
-  // Some iOS BLE browsers (e.g. Bluetooth Browser) stretch the page under the status bar after scrolling
-  // without reporting env(safe-area-inset-top). Add the notch height only while the page fills the whole screen.
+  // After the first scroll, the Bluetooth Browser (iOS) no longer lets the page return to the very top: it springs
+  // back to a fixed offset (62 px on the tested iPhone, the notch height), hiding the heading. When scrolling up comes
+  // to rest near the top, try to reach the top once; if the browser refuses, pad the page by the remaining offset.
   const probe = document.createElement("div");
   probe.className = "safe-area-probe";
   document.body.append(probe);
-  const iOS = /iPhone|iPod/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
   let scheduled = false;
+  let compensation = 0;
+  let lastY = scrollY;
+  let lastUpAt = 0;
+  let probing = false;
+  let settleTimer = null;
+  let startValues = null;
   function updateNotch() {
     scheduled = false;
-    const reported = probe.getBoundingClientRect().height;
-    const portrait = innerHeight >= innerWidth;
-    const screenHeight = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
-    const height = Math.max(innerHeight, visualViewport?.height || 0);
-    const fullScreen = height >= screenHeight - 2;
-    const fallback = iOS && portrait && fullScreen && reported < 1 ? 59 : 0;
-    document.documentElement.style.setProperty("--notch-fallback", fallback + "px");
-    const values = "Bildschirm " + screenHeight + " / Seite " + Math.round(height) + " / Aussparung " + Math.round(reported) +
-      " / Zusatz " + fallback + " / Scroll " + Math.round(scrollY) + " / Sicht " + Math.round(visualViewport?.offsetTop ?? -1) +
-      "," + Math.round(visualViewport?.pageTop ?? -1) + " / Kopf " + Math.round(document.querySelector("header")?.getBoundingClientRect().top ?? -1);
+    document.documentElement.style.setProperty("--notch-fallback", compensation + "px");
     const info = document.getElementById("notch-diagnosis");
-    if (info) {
-      startValues ??= values;
-      info.textContent = "Start: " + startValues + "\nJetzt: " + values + "\n" + navigator.userAgent.replace(/^Mozilla\/5\.0 /, "").slice(0, 140);
+    if (!info) return;
+    const values = "Seite " + Math.round(innerHeight) + " / Aussparung " + Math.round(probe.getBoundingClientRect().height) +
+      " / Scroll " + Math.round(scrollY) + " / Kopf " + Math.round(document.querySelector("header")?.getBoundingClientRect().top ?? -1) +
+      " / Ausgleich " + compensation;
+    startValues ??= values;
+    info.textContent = "Start: " + startValues + "\nJetzt: " + values;
+  }
+  const schedule = () => { if (!scheduled) { scheduled = true; requestAnimationFrame(updateNotch); } };
+  function settled() {
+    if (probing) return;
+    const y = scrollY;
+    if (compensation && y <= 0) {
+      // The browser lets the page reach the top again, so the padding is no longer needed.
+      compensation = 0;
+      schedule();
+    } else if (!compensation && Date.now() - lastUpAt < 1500 && y > 2 && y <= 120) {
+      probing = true;
+      scrollTo(0, 0);
+      setTimeout(() => {
+        probing = false;
+        const rest = Math.round(scrollY);
+        if (rest > 2 && rest <= 120) { compensation = rest; schedule(); }
+      }, 450);
     }
   }
-  let startValues = null;
-  const schedule = () => { if (!scheduled) { scheduled = true; requestAnimationFrame(updateNotch); } };
-  for (const target of [window, window.visualViewport].filter(Boolean)) {
-    target.addEventListener("resize", schedule);
-    target.addEventListener("scroll", schedule, {passive:true});
-  }
+  addEventListener("scroll", () => {
+    // The browser's spring-back is a small downward move, so look at upward scrolling within the last moment.
+    if (scrollY < lastY && !probing) lastUpAt = Date.now();
+    lastY = scrollY;
+    clearTimeout(settleTimer);
+    settleTimer = setTimeout(settled, 300);
+    schedule();
+  }, {passive:true});
+  addEventListener("resize", schedule);
   addEventListener("orientationchange", schedule);
   updateNotch();
 })();
@@ -668,8 +688,8 @@ function renderMeasurementVisual(card, type, value, solarMaximum = 330) {
     });
   }
   $("environment-status").textContent = !supported
-    ? "Web Bluetooth ist in diesem Kontext nicht verfuegbar. Einen kompatiblen Bluetooth-Browser verwenden."
-    : "Snettbox: Ladestand und Leistung live. Temperatur: hoechster der drei Sensoren auf der 12-V-Seite der Snettbox (Tc, T12, T34); wird nur mit den ausfuehrlichen Snettbox-Meldungen aktualisiert, daher die Zeitangabe \"Stand\". Gasolina (\"UTS Tank Sensor\"): Fuellstand alle 20 Sekunden, mit der App abgeglichen (39 %). SC330: Datenformat noch offen. Hersteller-Apps vorher schliessen, da die Geraete meist nur eine Verbindung gleichzeitig erlauben. Kommt der Browser wieder in den Vordergrund, verbinden sich bereits bestaetigte Geraete automatisch neu.";
+    ? "Bluetooth ist in diesem Browser nicht verfuegbar. Bitte im Bluetooth Browser oeffnen."
+    : "Bluetooth ist in diesem Browser verfuegbar.";
   // No automatic pickers on open: everything starts with one tap on the camper.
   if (bluetoothAvailable === null) {
     bluetooth.getAvailability().then(available => { bluetoothAvailable = available; }, () => { bluetoothAvailable = true; })
