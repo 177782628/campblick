@@ -291,20 +291,33 @@ function renderMeasurementVisual(card, type, value, solarMaximum = 330) {
     info.textContent = "Start: " + startValues + "\nJetzt: " + values;
   }
   const schedule = () => { if (!scheduled) { scheduled = true; requestAnimationFrame(updateNotch); } };
+  // Changing the page length makes the Bluetooth Browser recalculate its top offset (opening the hints did the
+  // same on the iPhone). A 1 px spacer that is removed again two frames later is enough and stays invisible.
+  function nudgeLayout() {
+    const spacer = document.createElement("div");
+    spacer.style.height = "1px";
+    document.body.append(spacer);
+    requestAnimationFrame(() => requestAnimationFrame(() => spacer.remove()));
+  }
   function settled() {
+    if (probing) return;
+    if (scrollY <= 200) nudgeLayout();
+    setTimeout(check, 150);
+  }
+  function check() {
     if (probing) return;
     const y = scrollY;
     if (compensation && y <= 0) {
       // The browser lets the page reach the top again, so the padding is no longer needed.
       compensation = 0;
       schedule();
-    } else if (!compensation && Date.now() - lastUpAt < 1500 && y > 2 && y <= 120) {
+    } else if (!compensation && Date.now() - lastUpAt < 1800 && y > 2 && y <= 150) {
       probing = true;
       scrollTo(0, 0);
       setTimeout(() => {
         probing = false;
         const rest = Math.round(scrollY);
-        if (rest > 2 && rest <= 120) { compensation = rest; schedule(); }
+        if (rest > 2 && rest <= 150) { compensation = rest; schedule(); }
       }, 450);
     }
   }

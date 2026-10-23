@@ -36,6 +36,8 @@ Downloads-Ordner) und `docs/index.html` (Online-Version, https://177782628.githu
   oben (federt auf 62 px zurueck, gemessen auf dem iPhone mit iOS 18.7). Kommt das Hochscrollen kurz vor dem
   oberen Rand zum Stehen, springt das Dashboard einmal nach oben; verweigert der Browser das, wird genau dieser
   Versatz oben als Abstand eingefuegt. Die alte Erkennung ueber die Seitenhoehe (griff nicht) ist entfernt.
+  Zusaetzlich wird beim Stehenbleiben nahe dem oberen Rand die Seitenlaenge kurz um 1 px veraendert; das loest im
+  Bluetooth Browser dieselbe Neuberechnung aus wie das Aufklappen der Hinweise (dort auf dem iPhone beobachtet).
 - „Bluetooth-Hinweise“ aufgeraeumt: kurze Statuszeile, eingeklappter Bereich „Entwicklerinfos“ (Abstand oben,
   Verbindung) und vier kurze Punkte (Camper, Geraete, Tipp, Aktualisierung); veraltete Texte entfernt.
 
