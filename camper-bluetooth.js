@@ -53,20 +53,7 @@ function renderMeasurementVisual(card, type, value, solarMaximum = 330) {
     info.textContent = "Start: " + startValues + "\nJetzt: " + values;
   }
   const schedule = () => { if (!scheduled) { scheduled = true; requestAnimationFrame(updateNotch); } };
-  // Changing the page length makes the Bluetooth Browser recalculate its top offset (opening the hints did the
-  // same on the iPhone). A 1 px spacer that is removed again two frames later is enough and stays invisible.
-  function nudgeLayout() {
-    const spacer = document.createElement("div");
-    spacer.style.height = "1px";
-    document.body.append(spacer);
-    requestAnimationFrame(() => requestAnimationFrame(() => spacer.remove()));
-  }
   function settled() {
-    if (probing) return;
-    if (scrollY <= 200) nudgeLayout();
-    setTimeout(check, 150);
-  }
-  function check() {
     if (probing) return;
     const y = scrollY;
     if (compensation && y <= 0) {
@@ -700,6 +687,17 @@ function renderMeasurementVisual(card, type, value, solarMaximum = 330) {
       if (background !== true) resumeConnections("Bluefy");
     });
   }
+  // Opening the hints realigns the page in the Bluetooth Browser after scrolling; this button does the same
+  // invisibly (open and close again within two frames) and returns to the top. Values are not touched.
+  $("view-refresh").addEventListener("click", () => {
+    const hints = $("hints");
+    const wasOpen = hints.open;
+    hints.open = !wasOpen;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      hints.open = wasOpen;
+      scrollTo(0, 0);
+    }));
+  });
   $("environment-status").textContent = !supported
     ? "Bluetooth ist in diesem Browser nicht verfuegbar. Bitte im Bluetooth Browser oeffnen."
     : "Bluetooth ist in diesem Browser verfuegbar.";
