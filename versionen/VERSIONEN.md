@@ -14,14 +14,21 @@ Downloads-Ordner) und `docs/index.html` (Online-Version, https://177782628.githu
 
 ## Einrichtung auf dem iPhone
 
-- Browser: **Nuviu** (App Store, kostenlos). Web Bluetooth funktioniert dort mit der Online-Adresse.
-- Start ueber einen Kurzbefehl auf dem Homebildschirm, der https://177782628.github.io/campblick/ in Nuviu oeffnet.
-- Browserleiste ausblenden: in Nuviu **mit zwei Fingern doppelt tippen**. Nuviu merkt sich das, auch nachdem die
-  App komplett geschlossen wurde.
-- Alternative: Bluefy mit Kurzbefehl `bluefy://open?url=https://177782628.github.io/campblick/` (Leiste bleibt sichtbar).
+- Browser: **Bluetooth Browser** (Angelo Cammalleri) mit https://177782628.github.io/campblick/ – dort laufen alle
+  Geraete am zuverlaessigsten und die Zuordnungen bleiben gespeichert.
+- Getestete Alternativen:
+  - Nuviu: ohne Browserleiste (mit zwei Fingern doppelt tippen, bleibt gespeichert), findet aber Snettbox und SC330
+    nicht, weil sie nur ihren Namen aussenden.
+  - Bluefy: findet alle Geraete, vergisst aber die Zuordnungen nach dem Neustart; Kurzbefehl
+    `bluefy://open?url=https://177782628.github.io/campblick/`.
+  - Safari mit Erweiterung beacio: funktioniert nur im Safari-Tab, nicht als Homebildschirm-App.
 - Als Safari-Homebildschirm-App funktioniert die Anzeige, aber iOS erlaubt dort kein Bluetooth.
 
-## In Arbeit (nach v1.0)
+## In Arbeit (nach v1.1, Fusszeile „v1.2-Entwurf“)
+
+- noch keine Aenderungen
+
+## v1.1 – 23.10.2026
 
 - Gasflasche: Fuellung mit abgerundeten Ecken, passt jetzt in die Flaschenkontur (Farbe gelb/rot unveraendert)
 - Web-App: Manifest und App-Symbol (weisser Camper auf Gruen) im Ordner `web/`, werden mit der Online-Version
@@ -29,8 +36,8 @@ Downloads-Ordner) und `docs/index.html` (Online-Version, https://177782628.githu
 - Oberer Abstand: fester Zusatzabstand (59 px) fuer die Kameraaussparung entfernt; Bluefy und Safari melden
   die Aussparung selbst (`env(safe-area-inset-top)`).
 - Bluetooth Browser: zieht die Seite nach dem Scrollen unter die Kameraaussparung, ohne sie zu melden. Das
-  Dashboard erkennt das (Seite so hoch wie der Bildschirm, keine gemeldete Aussparung) und fuegt dann 59 px hinzu.
-  Messwerte stehen unter „Bluetooth-Hinweise“ → „Abstand oben (Diagnose)“.
+  Dashboard soll das erkennen (Seite so hoch wie der Bildschirm, keine gemeldete Aussparung) und dann 59 px
+  hinzufuegen; im Test auf dem iPhone noch ohne Wirkung. Messwerte ganz oben unter „Bluetooth-Hinweise“.
 - Automatisches Neuverbinden, wenn der Browser wieder in den Vordergrund kommt (Bluefy-Ereignis
   `backgroundstatechanged` und Sichtbarkeit der Seite); nur fuer bereits bestaetigte, nicht von Hand getrennte Geraete
 - „Geraet auswaehlen“ sucht gezielt nach dem Geraetenamen (Snettbox…, @UTS…/UTS Tank Sensor, SC330…), weil Nuviu

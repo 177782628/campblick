@@ -28,6 +28,6 @@ if ($Version) {
 }
 [IO.File]::WriteAllText($target, $bundle, [Text.UTF8Encoding]::new($false))
 Copy-Item -LiteralPath $target -Destination (Join-Path $downloads $name) -Force
-if ($Version) { Get-ChildItem -LiteralPath $dir -File | ForEach-Object { $_.IsReadOnly = $true } }
+if ($Version) { Get-ChildItem -LiteralPath $dir -File -Recurse | ForEach-Object { $_.IsReadOnly = $true } }
 Write-Output "Gebaut: $target"
 Write-Output "Kopie: $(Join-Path $downloads $name)"
